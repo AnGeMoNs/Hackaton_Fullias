@@ -1,7 +1,6 @@
-// file: app/api/meteo/route.js
+// app/api/meteo/route.js
 import { NextResponse } from "next/server";
 
-// --- utilidades de limpieza ---
 const isMissing = (v) => v == null || Number.isNaN(v) || v <= -900;
 const clamp = (v, min, max) => (v == null ? null : (v < min || v > max ? null : v));
 const toISODateUTC = (d) => {
@@ -11,7 +10,6 @@ const toISODateUTC = (d) => {
   return `${y}${m}${day}`;
 };
 
-// NASA: m/s → km/h
 const msToKmh = (ms) => (typeof ms === "number" ? ms * 3.6 : null);
 
 const pickLatestPowerValue = (rec) => {
@@ -50,11 +48,11 @@ export async function GET(req) {
   const end = toISODateUTC(now);
   const powerUrl =
     `https://power.larc.nasa.gov/api/temporal/hourly/point?parameters=` +
-    ["PS","ALLSKY_SFC_UV_INDEX","PRECTOTCORR","WS10M","WD10M"].join(",") +
+    ["PS","ALLSKY_SFC_UV_INDEX","PRECTOTCORR","WS10M","WD10M","T2M"].join(",") +
     `&community=RE&longitude=${lon}&latitude=${lat}&start=${start}&end=${end}&format=JSON&time-standard=UTC`;
 
-  let powerRaw = { ps: null, uv: null, prectot: null, ws10m: null, wd10m: null };
-  let power = { ps_hpa: null, uv: null, prectot_mmph: null, ws_kmh: null, wd_deg: null };
+  let powerRaw = { ps: null, uv: null, prectot: null, ws10m: null, wd10m: null, t2m: null };
+  let power = { ps_hpa: null, uv: null, prectot_mmph: null, ws_kmh: null, wd_deg: null, temp_c: null };
   let powerErr = null, powerUnits = null;
 
   try {
@@ -64,48 +62,68 @@ export async function GET(req) {
     const p = j?.properties?.parameter ?? null;
     powerUnits = j?.properties?.parameter_units ?? null;
 
-    // crudos
     powerRaw.ps = pickLatestPowerValue(p?.PS);
     powerRaw.uv = pickLatestPowerValue(p?.ALLSKY_SFC_UV_INDEX);
     powerRaw.prectot = pickLatestPowerValue(p?.PRECTOTCORR);
     powerRaw.ws10m = pickLatestPowerValue(p?.WS10M);
     powerRaw.wd10m = pickLatestPowerValue(p?.WD10M);
+    powerRaw.t2m = pickLatestPowerValue(p?.T2M);
 
-    // limpieza y conversiones
-    // PS → hPa: si unidad kPa o valor <200 asumimos kPa; si no, ya es hPa
+    // Presión
     let ps = isMissing(powerRaw.ps) ? null : Number(powerRaw.ps);
     if (ps != null) {
       const unit = String(powerUnits?.PS || "").toLowerCase();
-      const inKPa = unit === "kpa" || ps < 200; // heurística segura
+      const inKPa = unit === "kpa" || ps < 200;
       ps = inKPa ? ps * 10 : ps;
-      ps = clamp(ps, 800, 1100); // rango típico superficie
+      ps = clamp(ps, 800, 1100);
     }
     power.ps_hpa = ps;
 
+    // UV
     let uv = isMissing(powerRaw.uv) ? null : clamp(Number(powerRaw.uv), 0, 20);
     power.uv = uv;
 
+    // Precipitación
     let pre = isMissing(powerRaw.prectot) ? null : Number(powerRaw.prectot);
-    pre = pre != null && pre < 0 ? 0 : pre; // no negativos
+    pre = pre != null && pre < 0 ? 0 : pre;
     power.prectot_mmph = pre;
 
+    // Viento
     let ws = isMissing(powerRaw.ws10m) ? null : msToKmh(Number(powerRaw.ws10m));
     ws = ws != null && ws < 0 ? null : ws;
     power.ws_kmh = ws;
 
     let wd = isMissing(powerRaw.wd10m) ? null : clamp(Number(powerRaw.wd10m), 0, 360);
     power.wd_deg = wd;
+
+    // Temperatura (T2M es temperatura a 2m en Celsius)
+    let temp = isMissing(powerRaw.t2m) ? null : clamp(Number(powerRaw.t2m), -60, 60);
+    power.temp_c = temp;
   } catch (e) {
     powerErr = String(e?.message || e);
     console.error("POWER error:", powerErr);
   }
 
   // === 2) Open-Meteo Weather (forecast) ===
-    let wx = null, wxErr = null, wxRaw: any = {};
-    try {
-      const u = new URL("https://api.open-meteo.com/v1/forecast");
+  let wx = null, wxErr = null, wxRaw: {
+    temperature_2m?: number | null;
+    wind_speed_10m?: number | null;
+    wind_direction_10m?: number | null;
+    wind_gusts_10m?: number | null;
+    precipitation?: number | null;
+    precipitation_probability?: number | null;
+    rain?: number | null;
+    showers?: number | null;
+    snowfall?: number | null;
+    freezing_level_height?: number | null;
+    uv_index?: number | null;
+    surface_pressure?: number | null;
+  } = {};
+  try {
+    const u = new URL("https://api.open-meteo.com/v1/forecast");
     u.searchParams.set("latitude", String(lat));
     u.searchParams.set("longitude", String(lon));
+    u.searchParams.set("current", "temperature_2m"); // Temperatura actual
     u.searchParams.set("hourly", [
       "wind_speed_10m","wind_direction_10m","wind_gusts_10m",
       "precipitation","precipitation_probability","rain","showers","snowfall",
@@ -120,24 +138,24 @@ export async function GET(req) {
     const H = j?.hourly;
     const idx = H?.time ? nearNowIndex(H.time) : 0;
 
-    // crudos
     wxRaw = {
-      wind_speed_10m: H?.wind_speed_10m?.[idx] ?? null,         // km/h
-      wind_direction_10m: H?.wind_direction_10m?.[idx] ?? null, // deg
-      wind_gusts_10m: H?.wind_gusts_10m?.[idx] ?? null,         // km/h
-      precipitation: H?.precipitation?.[idx] ?? null,           // mm
-      precipitation_probability: H?.precipitation_probability?.[idx] ?? null, // %
-      rain: H?.rain?.[idx] ?? null,                              // mm
-      showers: H?.showers?.[idx] ?? null,                        // mm
-      snowfall: H?.snowfall?.[idx] ?? null,                      // cm
-      freezing_level_height: H?.freezing_level_height?.[idx] ?? null, // m
-      uv_index: H?.uv_index?.[idx] ?? null,                      // index
-      surface_pressure: H?.surface_pressure?.[idx] ?? null       // hPa
+      temperature_2m: j?.current?.temperature_2m ?? null,
+      wind_speed_10m: H?.wind_speed_10m?.[idx] ?? null,
+      wind_direction_10m: H?.wind_direction_10m?.[idx] ?? null,
+      wind_gusts_10m: H?.wind_gusts_10m?.[idx] ?? null,
+      precipitation: H?.precipitation?.[idx] ?? null,
+      precipitation_probability: H?.precipitation_probability?.[idx] ?? null,
+      rain: H?.rain?.[idx] ?? null,
+      showers: H?.showers?.[idx] ?? null,
+      snowfall: H?.snowfall?.[idx] ?? null,
+      freezing_level_height: H?.freezing_level_height?.[idx] ?? null,
+      uv_index: H?.uv_index?.[idx] ?? null,
+      surface_pressure: H?.surface_pressure?.[idx] ?? null
     };
 
-    // limpieza (OM YA está en km/h / hPa / mm)
     wx = {
       time: H?.time?.[idx] ?? null,
+      temperature_c: clamp(Number(wxRaw.temperature_2m), -60, 60),
       wind_speed_kmh: clamp(Number(wxRaw.wind_speed_10m), 0, 300),
       wind_dir_deg: clamp(Number(wxRaw.wind_direction_10m), 0, 360),
       wind_gust_kmh: clamp(Number(wxRaw.wind_gusts_10m), 0, 350),
@@ -223,6 +241,7 @@ export async function GET(req) {
 
   // === Selección con fallbacks ===
   const final = {
+    temperature_c: power.temp_c ?? wx?.temperature_c ?? null,
     pressure_hpa: power.ps_hpa ?? wx?.surface_pressure_hpa ?? null,
     uv_index: power.uv ?? air?.uv_index_openmeteo ?? wx?.uv_index_openmeteo ?? null,
     precipitation_mm_per_hr: power.prectot_mmph ?? wx?.precipitation_mm ?? null,
@@ -254,6 +273,7 @@ export async function GET(req) {
     },
     generated_at: new Date().toISOString(),
     units: {
+      temperature: "°C",
       pressure: "hPa",
       precipitation_rate: "mm/h",
       precipitation_amount: "mm",
