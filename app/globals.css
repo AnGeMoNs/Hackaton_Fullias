@@ -42,7 +42,7 @@ body {
 }
 
 /* ============================================
-   LEAFLET - OPTIMIZACIÓN MÓVIL
+   LEAFLET - OPTIMIZACIÓN MÓVIL Y DESKTOP
    ============================================ */
 
 .leaflet-container {
@@ -51,30 +51,39 @@ body {
   font-size: 14px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   touch-action: pan-x pan-y;
-  /* Asegurar que el contenedor se renderice correctamente en móviles */
   position: relative;
   z-index: 1;
 }
 
-/* Fix específico para móviles: asegurar que Leaflet tenga altura mínima */
+/* Altura mínima garantizada en móviles */
 @media (max-width: 1023px) {
   .leaflet-container {
     min-height: 400px;
   }
 }
 
-@media (max-width: 640px) {
+/* Ajustes específicos para tablets */
+@media (min-width: 640px) and (max-width: 1023px) {
   .leaflet-container {
-    font-size: 13px;
+    min-height: 500px;
   }
 }
 
-/* Popups mejorados para móvil */
+/* Ajustes para móviles pequeños */
+@media (max-width: 640px) {
+  .leaflet-container {
+    font-size: 13px;
+    min-height: 350px;
+  }
+}
+
+/* Popups mejorados y responsivos */
 .leaflet-popup-content-wrapper {
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
   max-width: 85vw;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 @media (max-width: 640px) {
@@ -97,7 +106,11 @@ body {
   }
 }
 
-/* Controles de zoom optimizados para táctil */
+/* ============================================
+   CONTROLES DE LEAFLET - RESPONSIVOS
+   ============================================ */
+
+/* Controles de zoom optimizados para cada dispositivo */
 .leaflet-control-zoom a {
   width: 32px;
   height: 32px;
@@ -107,6 +120,17 @@ body {
   transition: all 0.2s ease;
 }
 
+/* Tablets */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .leaflet-control-zoom a {
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    font-size: 20px;
+  }
+}
+
+/* Móviles */
 @media (max-width: 640px) {
   .leaflet-control-zoom a {
     width: 40px;
@@ -141,7 +165,16 @@ body {
   background-color: white;
   border-radius: 8px;
   transition: all 0.2s ease;
-  color: #3b82f6; /* blue-500 */
+  color: #3b82f6;
+  cursor: pointer;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .leaflet-control-locate {
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -158,10 +191,10 @@ body {
 }
 
 .leaflet-control-locate:active {
-  background-color: #2563eb; /* blue-600 */
+  background-color: #2563eb;
 }
 
-/* Estado de cargando para el botón de ubicación */
+/* Estado de cargando */
 .leaflet-control-locate.loading {
   background-color: #3b82f6;
   color: white;
@@ -177,7 +210,7 @@ body {
   }
 }
 
-/* Efecto hover para dispositivos con mouse */
+/* Hover solo en dispositivos con mouse */
 @media (hover: hover) {
   .leaflet-control-zoom a:hover {
     transform: scale(1.05);
@@ -188,9 +221,10 @@ body {
   }
 }
 
-/* Separación entre controles en topright */
+/* Espaciado entre controles - Ajustado por dispositivo */
 .leaflet-top.leaflet-right .leaflet-control {
   margin-top: 10px;
+  margin-right: 10px;
 }
 
 .leaflet-top.leaflet-right .leaflet-control:first-child {
@@ -200,11 +234,108 @@ body {
 @media (max-width: 640px) {
   .leaflet-top.leaflet-right .leaflet-control {
     margin-top: 12px;
+    margin-right: 8px;
   }
   
   .leaflet-top.leaflet-right .leaflet-control:first-child {
     margin-top: 12px;
   }
+}
+
+/* Espaciado para leyenda en la izquierda */
+.leaflet-top.leaflet-left .leaflet-control {
+  margin-top: 10px;
+  margin-left: 10px;
+}
+
+@media (max-width: 640px) {
+  .leaflet-top.leaflet-left .leaflet-control {
+    margin-top: 8px;
+    margin-left: 8px;
+  }
+}
+
+/* ============================================
+   WIDGETS METEOROLÓGICOS - RESPONSIVOS
+   ============================================ */
+
+/* Móviles - versión ultra-compacta en scroll horizontal */
+@media (max-width: 639px) {
+  .meteo-widgets-container {
+    position: fixed !important;
+    bottom: 85px !important;
+    left: 8px !important;
+    right: 8px !important;
+    max-width: calc(100% - 16px) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    z-index: 998 !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  
+  .meteo-widgets-container::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  .meteo-widgets-container > div {
+    flex-shrink: 0 !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    padding: 8px !important;
+    font-size: 11px !important;
+    border-radius: 8px !important;
+  }
+  
+  /* Indicador visual de scroll */
+  .meteo-widgets-container::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.95), transparent);
+    pointer-events: none;
+    border-radius: 0 12px 12px 0;
+  }
+}
+
+/* Tablets - versión compacta vertical */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .meteo-widgets-container {
+    max-width: 180px !important;
+    font-size: 11px !important;
+  }
+  
+  .meteo-widgets-container > div {
+    padding: 8px !important;
+  }
+}
+
+/* Desktop - versión completa */
+@media (min-width: 1024px) {
+  .meteo-widgets-container {
+    max-width: 280px;
+  }
+}
+
+/* Asegurar que los widgets no interfieran con otros elementos */
+.meteo-widgets-container {
+  pointer-events: auto;
+}
+
+.meteo-widgets-container > * {
+  pointer-events: auto;
 }
 
 /* ============================================
@@ -269,7 +400,7 @@ body {
   filter: brightness(0.98) contrast(1.03) saturate(1.05);
 }
 
-/* Mejora visual para tema oscuro si es necesario */
+/* Tema oscuro */
 @media (prefers-color-scheme: dark) {
   .leaflet-tile-pane {
     filter: brightness(0.85) contrast(1.1);
@@ -308,7 +439,7 @@ body {
 }
 
 /* ============================================
-   INPUTS Y FORMULARIOS MÓVILES
+   INPUTS Y FORMULARIOS - RESPONSIVE
    ============================================ */
 
 input,
@@ -334,10 +465,10 @@ select:focus {
 }
 
 /* ============================================
-   TOUCH TARGETS Y ACCESIBILIDAD
+   TOUCH TARGETS - ACCESIBILIDAD MÓVIL
    ============================================ */
 
-/* Tamaños mínimos para áreas táctiles */
+/* Tamaños mínimos obligatorios en dispositivos táctiles */
 @media (hover: none) {
   button,
   a,
@@ -352,7 +483,7 @@ select:focus {
   }
 }
 
-/* Estados activos mejorados para móvil */
+/* Estados activos optimizados */
 button:active,
 [role="button"]:active {
   transform: scale(0.97);
@@ -367,17 +498,113 @@ button:active,
 }
 
 /* ============================================
-   ANIMACIONES REDUCIDAS
+   MODALES - RESPONSIVE
    ============================================ */
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 640px) {
+  .modal-content {
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+/* ============================================
+   CARDS Y CONTENEDORES - RESPONSIVE
+   ============================================ */
+
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    border-radius: 12px;
+  }
+}
+
+/* ============================================
+   BOTONES - RESPONSIVE
+   ============================================ */
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:active {
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+@media (hover: hover) {
+  .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  }
+}
+
+/* ============================================
+   BADGES - RESPONSIVE
+   ============================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+}
+
+/* ============================================
+   SKELETON LOADING
+   ============================================ */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 25%,
+    #e2e8f0 50%,
+    #f1f5f9 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 
@@ -428,7 +655,7 @@ button:active,
 }
 
 /* ============================================
-   FIX PARA VIEWPORT HEIGHT EN MÓVILES
+   VIEWPORT HEIGHT - FIX MÓVILES
    ============================================ */
 
 .min-h-screen-safe {
@@ -442,7 +669,7 @@ button:active,
 }
 
 /* ============================================
-   UTILIDADES DE SELECCIÓN
+   SELECCIÓN DE TEXTO
    ============================================ */
 
 .no-select {
@@ -460,7 +687,7 @@ button:active,
 }
 
 /* ============================================
-   MEJORAS DE TIPOGRAFÍA
+   TIPOGRAFÍA OPTIMIZADA
    ============================================ */
 
 h1, h2, h3, h4, h5, h6 {
@@ -470,163 +697,28 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ============================================
-   ESTILOS DE MODALES Y OVERLAYS
-   ============================================ */
-
-.modal-overlay {
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  animation: fadeIn 0.2s ease;
-}
-
-.modal-content {
-  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (max-width: 640px) {
-  .modal-content {
-    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-}
-
-/* ============================================
-   CARDS Y CONTENEDORES
-   ============================================ */
-
-.card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (hover: hover) {
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  }
-}
-
-@media (max-width: 640px) {
-  .card {
-    border-radius: 12px;
-  }
-}
-
-/* ============================================
-   BOTONES MEJORADOS
-   ============================================ */
-
-.btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  transition: all 0.2s ease;
-}
-
-.btn-primary:active {
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-}
-
-@media (hover: hover) {
-  .btn-primary:hover {
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-  }
-}
-
-/* ============================================
-   MEJORAS PARA BADGES Y TAGS
-   ============================================ */
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-  .badge {
-    font-size: 11px;
-    padding: 3px 8px;
-  }
-}
-
-/* ============================================
-   ESTADOS DE CARGA
-   ============================================ */
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    #f1f5f9 25%,
-    #e2e8f0 50%,
-    #f1f5f9 75%
-  );
-  background-size: 200% 100%;
-  animation: loading 1.5s ease-in-out infinite;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* ============================================
-   OPTIMIZACIONES DE RENDIMIENTO
-   ============================================ */
-
-/* Aceleración por hardware para animaciones */
-.will-animate {
-  will-change: transform, opacity;
-}
-
-/* Después de la animación, quitar will-change */
-.animated {
-  will-change: auto;
-}
-
-/* ============================================
-   MEJORAS ESPECÍFICAS PARA PWA
-   ============================================ */
-
-/* Ajustes para cuando la app está instalada */
-@media (display-mode: standalone) {
-  body {
-    background: white;
-  }
-  
-  /* Ocultar elementos innecesarios en modo standalone */
-  .browser-only {
-    display: none;
-  }
-}
-
-/* ============================================
-   LANDSCAPE ORIENTATION
+   ORIENTACIÓN LANDSCAPE - MÓVILES
    ============================================ */
 
 @media (max-height: 500px) and (orientation: landscape) {
   .modal-mobile-bottom {
     max-height: 90vh;
+    overflow-y: auto;
   }
   
   .leaflet-popup-content-wrapper {
     max-height: 70vh;
     overflow-y: auto;
   }
+  
+  /* Ocultar widgets en landscape móvil */
+  .meteo-widgets-container {
+    display: none !important;
+  }
 }
 
 /* ============================================
-   TRANSICIONES GLOBALES SUAVES
+   TRANSICIONES SUAVES
    ============================================ */
 
 .transition-smooth {
@@ -638,7 +730,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ============================================
-   FOCUS VISIBLE MEJORADO
+   FOCUS VISIBLE - ACCESIBILIDAD
    ============================================ */
 
 *:focus-visible {
@@ -653,7 +745,7 @@ a:focus-visible {
 }
 
 /* ============================================
-   GRID Y LAYOUT RESPONSIVOS
+   GRID RESPONSIVO
    ============================================ */
 
 .responsive-grid {
@@ -665,5 +757,83 @@ a:focus-visible {
 @media (min-width: 640px) {
   .responsive-grid {
     gap: 1.5rem;
+  }
+}
+
+/* ============================================
+   ANIMACIONES REDUCIDAS - ACCESIBILIDAD
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   OPTIMIZACIONES PWA
+   ============================================ */
+
+@media (display-mode: standalone) {
+  body {
+    background: white;
+  }
+  
+  .browser-only {
+    display: none;
+  }
+}
+
+/* ============================================
+   RENDIMIENTO
+   ============================================ */
+
+.will-animate {
+  will-change: transform, opacity;
+}
+
+.animated {
+  will-change: auto;
+}
+
+/* ============================================
+   AJUSTES ESPECÍFICOS PARA BREAKPOINTS
+   ============================================ */
+
+/* Pantallas muy pequeñas (iPhone SE, etc) */
+@media (max-width: 375px) {
+  .leaflet-container {
+    min-height: 300px;
+  }
+  
+  .card {
+    border-radius: 8px;
+    padding: 12px;
+  }
+}
+
+/* Tablets en retrato */
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+  .leaflet-container {
+    min-height: 600px;
+  }
+}
+
+/* Desktop pequeño */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .meteo-widgets-container {
+    max-width: 240px;
+  }
+}
+
+/* Desktop grande */
+@media (min-width: 1280px) {
+  .meteo-widgets-container {
+    max-width: 300px;
   }
 }
